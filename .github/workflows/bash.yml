@@ -1,0 +1,36 @@
+name: Run Bash Script and Commit JSON
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Fetch all history so we can push back to it
+
+    - name: Set up environment
+      run: sudo apt-get update && sudo apt-get install -y jq  # Install jq if your script needs it
+
+    - name: Execute Bash script
+      run: bash ./src/bash-script-bi.sh > ./currency_all/tipo_de_cambio_bi.json  # Replace 'your-script.sh' with your actual script
+
+    - name: Add current datetime to JSON
+      run: |
+        TZ='America/Guatemala' current_datetime=$(date +"%Y-%m-%d %H:%M:%S")
+        jq --arg datetime "$current_datetime" '. + {current_datetime: $datetime}' ./currency_all/tipo_de_cambio_bi.json > ./currency_all/temp.json
+        mv ./currency_all/temp.json ./currency_all/tipo_de_cambio_bi.json
+
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add ./currency_all/tipo_de_cambio_bi.json
+        git commit -m "Add updated tipo_de_cambio_bi.json with current datetime"
+        git push
