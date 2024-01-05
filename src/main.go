@@ -49,6 +49,12 @@ var urls = []string{
 	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/crc/pen.json",
 	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/crc/mxn.json",
 	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/crc/usd.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/crc.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/gtq.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/cop.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/pen.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/mxn.json",
+	"https://raw.githubusercontent.com/fawazahmed0/currency-api/1/latest/currencies/clp/usd.json",
 }
 
 func fetchAPI(url string, wg *sync.WaitGroup, results chan<- map[string]interface{}) {
