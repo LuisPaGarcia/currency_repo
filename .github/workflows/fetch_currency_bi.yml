@@ -1,5 +1,5 @@
-# .github/workflows/main.yml
-name: Fetch Currency Rates
+# .github/workflows/fetch_currency_bi.yml
+name: Fetch Currency Rates BI
 
 on:
   workflow_dispatch:
