@@ -4,7 +4,7 @@ name: Fetch Currency Rates BI
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */12 * * *'
+    - cron: '0 5,17 * * *'
 
 jobs:
   fetch-rates:
