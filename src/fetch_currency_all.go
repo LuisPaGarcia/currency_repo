@@ -48,7 +48,7 @@ func main() {
 	}
 	// Agregar la fecha actual en la zona horaria de Guatemala en la raíz del objeto
 	currentDate := time.Now().In(location).Format("2006-01-02 15:04:05")
-	finalResult["date"] = currentDate
+	finalResult["timestamp"] = currentDate
 
 	// Convert the combined results to JSON
 	finalJSON, err := json.MarshalIndent(finalResult, "", "    ")
