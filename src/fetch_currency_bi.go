@@ -17,6 +17,14 @@ type ApiResponse struct {
 	Date   string   `json:"date"`
 }
 
+// HistoricEntry is the shape stored in historic_tipo_de_cambio_bi.json
+type HistoricEntry struct {
+	Result string `json:"Result"`
+	Compra string `json:"compra"`
+	Venta  string `json:"venta"`
+	Date   string `json:"date"`
+}
+
 func main() {
 	urlStr := "https://www.corporacionbi.com/gt/bancoindustrial/wp-content/plugins/jevelin_showcase_exchange_rate/service/mod_moneda.php"
 	method := "POST"
@@ -108,18 +116,59 @@ func main() {
 		return
 	}
 
-	var historicEntries []ApiResponse
-	// If file is empty or just whitespace, treat as empty array
+	// We'll read as raw messages to support migrating old entries.
+	var rawEntries []json.RawMessage
 	if len(histData) > 0 {
-		if err := json.Unmarshal(histData, &historicEntries); err != nil {
-			// If unmarshal fails, print error and abort to avoid overwriting
+		if err := json.Unmarshal(histData, &rawEntries); err != nil {
 			fmt.Println("error unmarshalling historic file:", err)
 			return
 		}
 	}
 
-	// Append the current response and write back.
-	historicEntries = append(historicEntries, apiResponse)
+	var historicEntries []HistoricEntry
+
+	// Helper to safely get index from Data
+	getIndex := func(data []string, i int) string {
+		if i >= 0 && i < len(data) {
+			return data[i]
+		}
+		return ""
+	}
+
+	// Convert any existing entries (old ApiResponse or already HistoricEntry)
+	for _, raw := range rawEntries {
+		var he HistoricEntry
+		if err := json.Unmarshal(raw, &he); err == nil {
+			// If it's already in historic shape, accept it.
+			historicEntries = append(historicEntries, he)
+			continue
+		}
+
+		var ar ApiResponse
+		if err := json.Unmarshal(raw, &ar); err == nil {
+			he = HistoricEntry{
+				Result: ar.Result,
+				Compra: getIndex(ar.Data, 3),
+				Venta:  getIndex(ar.Data, 2),
+				Date:   ar.Date,
+			}
+			historicEntries = append(historicEntries, he)
+			continue
+		}
+
+		// If neither format, skip the entry.
+	}
+
+	// Build historic entry from the current response (use apiResponse.Date set above)
+	currentHistoric := HistoricEntry{
+		Result: apiResponse.Result,
+		Compra: getIndex(apiResponse.Data, 3),
+		Venta:  getIndex(apiResponse.Data, 2),
+		Date:   apiResponse.Date,
+	}
+
+	historicEntries = append(historicEntries, currentHistoric)
+
 	newHistJSON, err := json.Marshal(historicEntries)
 	if err != nil {
 		fmt.Println("error marshalling historic entries:", err)
