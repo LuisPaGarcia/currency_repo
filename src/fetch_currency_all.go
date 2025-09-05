@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -63,6 +64,51 @@ func main() {
 	}
 
 	fmt.Println("Fetch completed.")
+
+	// --- Append the same object into historic_currency_rates.json ---
+	historicPath := "./currency_all/historic_currency_rates.json"
+
+	// Ensure the historic file exists. If not, create it with an empty array.
+	if _, err := os.Stat(historicPath); os.IsNotExist(err) {
+		if err := ioutil.WriteFile(historicPath, []byte("[]"), 0644); err != nil {
+			fmt.Println("error creating historic file:", err)
+			return
+		}
+	}
+
+	histData, err := ioutil.ReadFile(historicPath)
+	if err != nil {
+		fmt.Println("error reading historic file:", err)
+		return
+	}
+
+	var rawEntries []json.RawMessage
+	if len(histData) > 0 {
+		if err := json.Unmarshal(histData, &rawEntries); err != nil {
+			fmt.Println("error unmarshalling historic file:", err)
+			return
+		}
+	}
+
+	// Marshal the finalResult (map) into JSON and append as a new element
+	entryJSON, err := json.Marshal(finalResult)
+	if err != nil {
+		fmt.Println("error marshalling new historic entry:", err)
+		return
+	}
+
+	rawEntries = append(rawEntries, entryJSON)
+
+	newHistJSON, err := json.MarshalIndent(rawEntries, "", "    ")
+	if err != nil {
+		fmt.Println("error marshalling historic array:", err)
+		return
+	}
+
+	if err := ioutil.WriteFile(historicPath, newHistJSON, 0644); err != nil {
+		fmt.Println("error writing historic file:", err)
+		return
+	}
 }
 
 // Adjusted fetchCurrency function to send results to a channel
