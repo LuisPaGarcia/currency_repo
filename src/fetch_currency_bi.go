@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -86,6 +87,47 @@ func main() {
 	err = ioutil.WriteFile("./currency_all/tipo_de_cambio_bi.json", modifiedJSON, 0644)
 	if err != nil {
 		fmt.Println(err)
+		return
+	}
+
+	// --- Append the same object into historic_tipo_de_cambio_bi.json ---
+	historicPath := "./currency_all/historic_tipo_de_cambio_bi.json"
+
+	// Ensure the historic file exists. If not, create it with an empty array.
+	if _, err := os.Stat(historicPath); os.IsNotExist(err) {
+		if err := ioutil.WriteFile(historicPath, []byte("[]"), 0644); err != nil {
+			fmt.Println("error creating historic file:", err)
+			return
+		}
+	}
+
+	// Read existing historic entries.
+	histData, err := ioutil.ReadFile(historicPath)
+	if err != nil {
+		fmt.Println("error reading historic file:", err)
+		return
+	}
+
+	var historicEntries []ApiResponse
+	// If file is empty or just whitespace, treat as empty array
+	if len(histData) > 0 {
+		if err := json.Unmarshal(histData, &historicEntries); err != nil {
+			// If unmarshal fails, print error and abort to avoid overwriting
+			fmt.Println("error unmarshalling historic file:", err)
+			return
+		}
+	}
+
+	// Append the current response and write back.
+	historicEntries = append(historicEntries, apiResponse)
+	newHistJSON, err := json.Marshal(historicEntries)
+	if err != nil {
+		fmt.Println("error marshalling historic entries:", err)
+		return
+	}
+
+	if err := ioutil.WriteFile(historicPath, newHistJSON, 0644); err != nil {
+		fmt.Println("error writing historic file:", err)
 		return
 	}
 }
